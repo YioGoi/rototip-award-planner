@@ -100,6 +100,22 @@ describe("createAwardDraftPersistStorage", () => {
 });
 
 describe("createAwardDraftStore", () => {
+    it("marks hydration complete when no stored draft exists", async () => {
+        const storage = createMemoryStorage();
+
+        const store = createAwardDraftStore(
+            "RFQ-2026-1042",
+            storage,
+        );
+
+        await store.persist.rehydrate();
+
+        expect(store.getState()).toMatchObject({
+            selections: {},
+            hasHydrated: true,
+        });
+    });
+
     it("restores selections only after explicit hydration", async () => {
         const rfqId = "RFQ-2026-1042";
         const storageKey =

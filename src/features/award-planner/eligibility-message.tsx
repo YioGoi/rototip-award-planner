@@ -2,6 +2,7 @@ import type {
     EligibilityIssue,
     EligibilityResult,
 } from "@/domain/eligibility";
+import { formatDateTime } from "@/lib/formatters";
 
 export function getEligibilityIssueMessage(
     issue: EligibilityIssue,
@@ -11,7 +12,7 @@ export function getEligibilityIssueMessage(
             return `Bid status is ${issue.status.toLowerCase()}.`;
 
         case "BID_EXPIRED":
-            return `Bid expired at ${issue.validUntil}.`;
+            return `Bid expired at ${formatDateTime(issue.validUntil)} UTC.`;
 
         case "MISSING_QUOTE":
             return "No quote was submitted for this line item.";
@@ -38,21 +39,26 @@ export function getEligibilityIssueMessage(
 
 type EligibilityMessageProps = {
     result: EligibilityResult;
+    id?: string;
 };
 
 export function EligibilityMessage({
     result,
+    id,
 }: EligibilityMessageProps) {
     if (result.eligible) {
         return (
-            <p className="text-sm font-medium text-emerald-700">
+            <p
+                id={id}
+                className="text-sm font-medium text-emerald-700"
+            >
                 Eligible
             </p>
         );
     }
 
     return (
-        <div>
+        <div id={id}>
             <p className="text-sm font-medium text-red-700">
                 Not eligible
             </p>

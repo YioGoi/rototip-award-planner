@@ -55,6 +55,8 @@ export function QuoteOption({
 
     const inputId =
         `selection-${lineItem.id}-${bid.id}`;
+    const eligibilityMessageId =
+        `${inputId}-eligibility`;
 
     return (
         <article
@@ -76,7 +78,8 @@ export function QuoteOption({
                         disabled={disabled}
                         onChange={onSelect}
                         aria-label={`Select ${partner.name} for ${lineItem.partNumber}`}
-                        className="mt-1 size-4 accent-emerald-700"
+                        aria-describedby={eligibilityMessageId}
+                        className="mt-1 size-4 accent-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
                     />
 
                     <div>
@@ -149,6 +152,7 @@ export function QuoteOption({
             <div className="mt-4">
                 <EligibilityMessage
                     result={eligibilityResult}
+                    id={eligibilityMessageId}
                 />
             </div>
 

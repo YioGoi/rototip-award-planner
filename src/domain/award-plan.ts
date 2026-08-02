@@ -46,9 +46,16 @@ export type AwardPlan = {
     grandTotal: number;
 };
 
+export type AwardPlanPreview = {
+    currency: string;
+    partners: AwardPlanPartnerGroup[];
+    currentTotal: number;
+};
+
 export type AwardPlanResult =
     | {
         complete: false;
+        preview: AwardPlanPreview;
         missingLineItemIds: string[];
         invalidSelections: InvalidSelection[];
     }
@@ -71,19 +78,16 @@ export function buildAwardPlan(
 ): AwardPlanResult {
     const { missingLineItemIds, invalidSelections, validSelections } = validateDraftSelections(data, selections);
 
-    if (invalidSelections.length > 0 || missingLineItemIds.length > 0) {
-        return {
-            complete: false,
-            missingLineItemIds,
-            invalidSelections,
-        };
-    }
-
     const selectedRows: SelectedAwardRow[] = [];
 
     for (const lineItem of data.rfq.lineItems) {
         const lineItemId = lineItem.id;
         const bidId = validSelections[lineItemId];
+
+        if (bidId === undefined) {
+            continue;
+        }
+
         const bid = data.bids.find(b => b.id === bidId);
         if (!bid) {
             throw new Error(`Bid with ID ${bidId} not found in case study.`);
@@ -98,7 +102,6 @@ export function buildAwardPlan(
         if (!partner) {
             throw new Error(`Partner with ID ${bid.partnerId} not found in case study.`);
         }
-
 
         const lineTotalDecimal = calculateLineItemTotal({
             unitPrice: quote.unitPrice,
@@ -236,6 +239,26 @@ export function buildAwardPlan(
         new Decimal(0),
     );
 
+    const partners = partnerResults.map(
+        (partnerResult) => partnerResult.group,
+    );
+
+    if (
+        invalidSelections.length > 0 ||
+        missingLineItemIds.length > 0
+    ) {
+        return {
+            complete: false,
+            preview: {
+                currency: data.metadata.baseCurrency,
+                partners,
+                currentTotal: toMoneyNumber(grandTotal),
+            },
+            missingLineItemIds,
+            invalidSelections,
+        };
+    }
+
     return {
         complete: true,
         plan: {
@@ -243,9 +266,7 @@ export function buildAwardPlan(
             evaluationTimestamp:
                 data.metadata.evaluationTimestamp,
             currency: data.metadata.baseCurrency,
-            partners: partnerResults.map(
-                (partnerResult) => partnerResult.group,
-            ),
+            partners,
             grandTotal: toMoneyNumber(grandTotal),
         },
     };

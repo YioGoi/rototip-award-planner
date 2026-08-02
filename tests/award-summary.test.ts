@@ -48,6 +48,49 @@ describe("AwardSummary", () => {
         expect(markup).toContain(
             "4 line items still need",
         );
+        expect(markup).toContain(
+            'aria-labelledby="award-summary-heading"',
+        );
+        expect(markup).toContain(
+            'id="award-summary-heading"',
+        );
+        expect(markup).not.toContain(
+            "The award plan is complete.",
+        );
+    });
+
+    it("renders current costs for an incomplete draft", () => {
+        const result = buildAwardPlan(
+            caseStudy,
+            {
+                "LI-001": "BID-002",
+                "LI-002": "BID-002",
+            },
+        );
+
+        const markup = renderAwardSummary(result);
+
+        expect(markup).toContain(
+            "Draft cost preview",
+        );
+        expect(markup).toContain(
+            "Final award plan is not available yet.",
+        );
+        expect(markup).toContain(
+            "Bosphorus Precision Ltd.",
+        );
+        expect(markup).toContain(
+            "Current draft total",
+        );
+        expect(markup).toContain(
+            formatMoney(8688.48, "EUR"),
+        );
+
+        const shippingLabels =
+            markup.match(/Shipping once per bid/g) ?? [];
+
+        expect(shippingLabels).toHaveLength(1);
+
         expect(markup).not.toContain(
             "The award plan is complete.",
         );

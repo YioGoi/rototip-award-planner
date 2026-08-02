@@ -95,67 +95,72 @@ export function LineItemSection({
                     <button
                         type="button"
                         onClick={onClearSelection}
-                        className="mt-5 text-sm font-medium text-slate-600 underline-offset-4 hover:underline"
+                        className="mt-5 text-sm font-medium text-slate-600 underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
                     >
                         Clear selection
                     </button>
                 )}
             </header>
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-2">
-                {bids.map((bid) => {
-                    const partner = partners.find(
-                        (candidate) =>
-                            candidate.id === bid.partnerId,
-                    );
-
-                    // Dataset integrity is validated on the server before this component renders.
-                    // Reaching this branch means that a validated relationship invariant was broken,
-                    // so fail loudly instead of silently hiding a bid from the comparison.
-                    if (!partner) {
-                        throw new Error(
-                            `Validated dataset is missing partner ${bid.partnerId}.`,
+            <fieldset className="mt-6 min-w-0 border-0 p-0">
+                <legend className="sr-only">
+                    {lineItem.name} award options
+                </legend>
+                <div className="grid gap-4 lg:grid-cols-2">
+                    {bids.map((bid) => {
+                        const partner = partners.find(
+                            (candidate) =>
+                                candidate.id === bid.partnerId,
                         );
-                    }
 
-                    // Keep every bid visible for a complete comparison, even when it has no quote
-                    // for this line item. A missing quote is meaningful domain input, so pass
-                    // `undefined` to eligibility instead of filtering out the card.
-                    const quote = bid.lineItemQuotes.find(
-                        (candidate) =>
-                            candidate.lineItemId === lineItem.id,
-                    );
+                        // Dataset integrity is validated on the server before this component renders.
+                        // Reaching this branch means that a validated relationship invariant was broken,
+                        // so fail loudly instead of silently hiding a bid from the comparison.
+                        if (!partner) {
+                            throw new Error(
+                                `Validated dataset is missing partner ${bid.partnerId}.`,
+                            );
+                        }
 
-                    const eligibilityResult =
-                        evaluateQuoteEligibility({
-                            bid,
-                            quote,
-                            lineItem,
-                            evaluationTimestamp,
-                        });
+                        // Keep every bid visible for a complete comparison, even when it has no quote
+                        // for this line item. A missing quote is meaningful domain input, so pass
+                        // `undefined` to eligibility instead of filtering out the card.
+                        const quote = bid.lineItemQuotes.find(
+                            (candidate) =>
+                                candidate.lineItemId === lineItem.id,
+                        );
 
-                    return (
-                        <QuoteOption
-                            key={bid.id}
-                            partner={partner}
-                            bid={bid}
-                            lineItem={lineItem}
-                            quote={quote}
-                            eligibilityResult={
-                                eligibilityResult
-                            }
-                            selected={selectedBidId === bid.id}
-                            disabled={
-                                !hasHydrated ||
-                                !eligibilityResult.eligible
-                            }
-                            onSelect={() => {
-                                onSelectBid(bid.id);
-                            }}
-                        />
-                    );
-                })}
-            </div>
+                        const eligibilityResult =
+                            evaluateQuoteEligibility({
+                                bid,
+                                quote,
+                                lineItem,
+                                evaluationTimestamp,
+                            });
+
+                        return (
+                            <QuoteOption
+                                key={bid.id}
+                                partner={partner}
+                                bid={bid}
+                                lineItem={lineItem}
+                                quote={quote}
+                                eligibilityResult={
+                                    eligibilityResult
+                                }
+                                selected={selectedBidId === bid.id}
+                                disabled={
+                                    !hasHydrated ||
+                                    !eligibilityResult.eligible
+                                }
+                                onSelect={() => {
+                                    onSelectBid(bid.id);
+                                }}
+                            />
+                        );
+                    })}
+                </div>
+            </fieldset>
         </section>
     );
 }

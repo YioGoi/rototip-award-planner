@@ -18,6 +18,11 @@ describe("buildAwardPlan", () => {
         expect(result).toStrictEqual(
             {
                 complete: false,
+                preview: {
+                    currency: "EUR",
+                    partners: [],
+                    currentTotal: 0,
+                },
                 missingLineItemIds: caseStudy.rfq.lineItems.map(
                     (lineItem) => lineItem.id,
                 ),
@@ -36,6 +41,11 @@ describe("buildAwardPlan", () => {
         expect(result).toStrictEqual(
             {
                 complete: false,
+                preview: {
+                    currency: "EUR",
+                    partners: [],
+                    currentTotal: 0,
+                },
                 missingLineItemIds: caseStudy.rfq.lineItems
                     .filter((lineItem) => lineItem.id !== "LI-003")
                     .map((lineItem) => lineItem.id),
@@ -55,6 +65,52 @@ describe("buildAwardPlan", () => {
                 ],
             }
         );
+    });
+
+    it("builds a cost preview for valid selections in an incomplete draft", () => {
+        const result = buildAwardPlan(caseStudy, {
+            "LI-001": "BID-002",
+            "LI-002": "BID-002",
+        });
+
+        expect(result).toMatchObject({
+            complete: false,
+            preview: {
+                currency: "EUR",
+                currentTotal: 8688.48,
+                partners: [
+                    {
+                        partnerId: "MP-002",
+                        lineItemsSubtotal: 8127.28,
+                        shippingTotal: 561.2,
+                        partnerTotal: 8688.48,
+                        bids: [
+                            {
+                                bidId: "BID-002",
+                                lineItemsSubtotal: 8127.28,
+                                shippingFee: 561.2,
+                                bidTotal: 8688.48,
+                                lineItems: [
+                                    {
+                                        lineItemId: "LI-001",
+                                        lineTotal: 5229.28,
+                                    },
+                                    {
+                                        lineItemId: "LI-002",
+                                        lineTotal: 2898,
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            missingLineItemIds: [
+                "LI-003",
+                "LI-004",
+            ],
+            invalidSelections: [],
+        });
     });
 
     it("builds a complete plan and charges shipping once for one selected bid", () => {

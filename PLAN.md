@@ -1,251 +1,182 @@
-# Rototip Bid Comparison and Award Plan — Implementation Plan
+# Rototip Award Planner — As-Built Implementation Plan
+
+## Status
+
+The MVP is implemented and verified. The application covers the supplied RFQ comparison, eligibility, selection, draft persistence, partial cost preview, and complete award-plan flows.
+
+This document describes the system as it exists now. [`SOLUTION.md`](SOLUTION.md) provides the shorter walkthrough version.
 
 ## 1. Objective
 
-Build a focused web application that helps a Rototip operations user:
+Provide a dependable decision-making interface in which an operations user can:
 
-1. Review an RFQ and all partner bids.
-2. Compare eligible and ineligible line-item quotes.
-3. Select at most one eligible quote for each RFQ line item.
-4. Split the award across multiple partners when useful.
-5. Persist an incomplete draft in the browser.
-6. Produce a complete award-plan summary only when every line item has a valid selection.
+1. Review every RFQ line item and every manufacturing-partner bid.
+2. Compare price, lead time, partner reliability, notes, and bid validity.
+3. Select at most one eligible quote for each line item.
+4. Split an award across bids and partners.
+5. Save and restore an incomplete draft in the browser.
+6. See the current commercial impact of valid draft selections.
+7. Produce a final award plan only after every line item has a valid selection.
 
-The implementation should prioritize dependable business rules, clear decision support, and explainable engineering choices over infrastructure or visual overengineering.
+## 2. Implemented scope
 
----
+### Core workflow
 
-## 2. Domain glossary
+- The RFQ header displays the title, identifiers, and fixed evaluation timestamp.
+- Every RFQ line item is rendered with its technical and quantity requirements.
+- Every bid remains visible for every line item, including missing and ineligible quotes.
+- Eligible quote choices use radio-group semantics to enforce one selection per line item.
+- Each line item's choices use native `fieldset`/`legend` grouping, and radios reference their eligibility descriptions.
+- Ineligibility reasons are displayed and ineligible choices are disabled.
+- Selections may be split across multiple partners.
 
-- **RFQ — Request for Quotation:** A customer's request for prices and delivery terms for one or more manufactured parts.
-- **Line item:** One requested part, quantity, and delivery requirement within the RFQ.
-- **Manufacturing partner:** A supplier capable of manufacturing one or more RFQ line items.
-- **Bid:** A partner's overall response to the RFQ. It contains bid-level status, validity, shipping, notes, and line-item quotes.
-- **Quote:** A partner's price and delivery terms for one specific RFQ line item.
-- **Eligible:** Allowed to be selected under the supplied business rules.
-- **Award:** Assigning a line item to a selected partner quote.
-- **Split award:** Assigning different line items from the same RFQ to different partners.
-- **Award plan:** The complete proposed allocation of line items to partners, including line totals, shipping fees, partner totals, and the grand total.
-- **Draft:** A partial or complete set of user selections that has not yet become a valid final award plan.
+### Draft behavior
 
----
+- Empty, partial, complete, and invalid-restored drafts are supported.
+- Only user selections are persisted in `localStorage`.
+- Draft data is versioned, RFQ-scoped, parsed with Zod, and revalidated against current business rules.
+- Hydration is deferred until after the client mounts to avoid a misleading empty-state flash.
+- Users can clear one selection or reset the entire draft.
 
-## 3. Scope
+### Cost output
 
-### MVP
+- A partial draft shows a clearly labelled cost preview built only from current valid selections.
+- The preview groups selected work by partner and bid.
+- It shows line totals, bid subtotals, shipping once per selected bid, partner totals, and the current draft total.
+- A preview is not presented as a final award plan.
+- The final award summary is produced only when every RFQ line item has one eligible selection.
 
-- Render the RFQ summary and every RFQ line item.
-- Show every partner choice, including missing and ineligible quotes.
-- Explain all ineligibility reasons.
-- Allow one eligible selection per line item.
-- Allow selections from multiple partners.
-- Calculate line-item totals.
-- Charge each selected bid's shipping fee once.
-- Show partner subtotals and the complete total in EUR.
-- Persist partial selections in browser storage.
-- Restore the draft after refresh.
-- Detect and visibly report invalid restored selections.
-- Produce a complete award-plan summary only when all line items have eligible selections.
-- Provide focused tests for the business-rule layer.
-
-### Optional only after MVP
-
-- Copy or download the award plan as JSON.
-- Responsive or keyboard-focused refinements.
-- A live deployment.
-- Dockerization.
-
----
-
-## 4. Intentional non-goals
-
-- No backend or mock API.
-- No database, Prisma, or authentication.
-- No external service calls.
-- No TanStack Query because there is no remote server state.
-- No Redux Toolkit because the shared state is small and focused.
-- No automatic "best bid" recommendation.
-- No multi-currency conversion.
-- No premature memoization or unnecessary abstraction.
-- No pixel-perfect design effort beyond a clear and dependable comparison interface.
-
----
-
-## 5. Technology choices
-
-### Next.js App Router
-
-Used because it matches Rototip's stack and provides a clear server/client boundary.
-
-- The supplied JSON is loaded and validated on the server.
-- The interactive award planner is a Client Component.
-- Domain functions remain framework-independent.
-
-### TypeScript in strict mode
-
-Used for explicit domain models, safe refactoring, and exhaustiveness across eligibility and award-plan result types.
-
-### Tailwind CSS
-
-Used to build a consistent comparison interface efficiently within the exercise timebox.
-
-### Zod
-
-Used for runtime validation at untrusted boundaries:
-
-- The supplied `case-study.json`.
-- Persisted browser draft data.
-
-### Zustand with persist middleware
-
-Used for the small amount of shared interactive state:
-
-- `lineItemId -> bidId` selections.
-- Draft reset and hydration status.
-
-Only user decisions are persisted. Eligibility, totals, and award-plan output are always derived again.
-
-### localStorage
-
-Used because browser storage explicitly satisfies the persistence requirement. This is an intentional scope-aligned choice, not a fallback.
-
-### decimal.js
-
-Used for deterministic base-10 monetary arithmetic because the dataset contains fractional unit prices such as `39.744`.
-
-- Intermediate values remain unrounded.
-- Output values are rounded to two decimal places.
-- Rounding policy: `ROUND_HALF_UP`.
-
-### Vitest
-
-Used to verify pure business rules independently of the React interface.
-
----
-
-## 6. High-level architecture
+## 3. Actual architecture
 
 ```text
 data/case-study.json
         |
         v
-Zod dataset validation
+Zod schema validation
         |
         v
-Next.js Server Component
+Cross-record integrity validation
         |
         v
-Validated serializable data
+Next.js Server Component (page.tsx)
+        |
+        v
+Validated serializable CaseStudy
         |
         v
 AwardPlanner Client Component
         |
-        +--> Zustand selections + localStorage persistence
+        +--> per-RFQ Zustand store
+        |       +--> versioned localStorage draft
+        |       +--> deferred hydration
         |
-        +--> Pure domain functions
-                - dataset integrity
-                - bid eligibility
-                - quote eligibility
-                - monetary calculations
-                - restored-selection validation
-                - award-plan generation
+        +--> pure domain functions
+        |       +--> eligibility
+        |       +--> selection revalidation
+        |       +--> Decimal.js calculations
+        |       +--> preview/final aggregation
         |
         v
-Comparison UI + draft state + award summary
+Comparison UI + draft status + cost summary
 ```
 
-### Core principle
+### Boundary decisions
 
-> Persist user decisions; derive business results.
+- JSON loading and validation happen on the server.
+- Only validated data crosses the Server-to-Client Component boundary.
+- UI components format and present domain output; they do not recalculate commercial rules.
+- Persisted state contains decisions, not derived totals or eligibility results.
 
-Do not persist totals, eligibility, partner details, or generated award-plan output.
-
----
-
-## 7. Proposed folder structure
+## 4. Domain model
 
 ```text
-data/
-  case-study.json
+RFQ
+└── many line items
 
-src/
-  app/
-    layout.tsx
-    page.tsx
+Partner
+└── many bids (the supplied dataset currently has one bid per partner)
 
-  data/
-    load-case-study.ts
+Bid
+├── belongs to one partner
+├── status, validity, currency, shipping, and notes
+└── many line-item quotes
 
-  domain/
-    schemas.ts
-    types.ts
-    dataset-integrity.ts
-    eligibility.ts
-    money.ts
-    selections.ts
-    award-plan.ts
+Line-item quote
+└── commercial response for one RFQ line item within one bid
 
-  features/
-    award-planner/
-      award-planner.tsx
-      rfq-header.tsx
-      line-item-section.tsx
-      quote-option.tsx
-      award-summary.tsx
-      draft-status.tsx
-      eligibility-message.tsx
-
-  store/
-    award-draft-store.ts
-    persisted-draft-schema.ts
-
-  lib/
-    formatters.ts
-
-tests/
-  dataset-integrity.test.ts
-  eligibility.test.ts
-  money.test.ts
-  award-plan.test.ts
+Draft selection
+└── lineItemId -> bidId
 ```
 
-The structure may be simplified if a file remains too small to justify its own module.
+The selection key is sufficient because the dataset allows at most one quote for the same line item within a bid. Dataset integrity validation enforces that invariant.
 
----
+## 5. Implemented business rules
 
-## 8. Data and state model
+### Time and bid eligibility
 
-### Canonical draft state
+- `metadata.evaluationTimestamp` is always used as the current time.
+- `validUntil` is an exclusive boundary.
+- A bid is eligible only when it is `SUBMITTED` and not expired.
+- Withdrawn and expired bids stay visible but cannot be selected.
 
-A line-item quote has no independent ID in the supplied dataset. It is identified by:
+### Quote eligibility
+
+A quote is eligible only when:
 
 ```text
-bidId + lineItemId
+parent bid is eligible
+AND unitPrice > 0
+AND setupFee >= 0
+AND minimumOrderQuantity <= RFQ quantity
+AND leadTimeDays <= required lead time
 ```
 
-The minimal state is therefore:
+A missing quote remains visible as an unavailable choice.
+
+### Money
+
+```text
+line total = unit price * RFQ quantity + setup fee
+```
+
+- Intermediate calculations use `Decimal.js` without intermediate rounding.
+- Output values use two decimal places and `ROUND_HALF_UP`.
+- Shipping belongs to a bid and is charged once when one or more quotes from that bid are selected.
+- Selecting multiple line items from the same bid does not duplicate shipping.
+
+### Completion
+
+- A draft may contain zero, some, or all selections.
+- Invalid stored selections remain visible but are excluded from preview and final totals.
+- A complete plan requires one currently eligible selection for every RFQ line item.
+
+## 6. Data validation
+
+Zod validates JSON shape and primitive constraints. A separate integrity layer validates relationships that schema validation alone cannot establish:
+
+- Unique partner, bid, and RFQ line-item IDs.
+- Every bid references an existing partner.
+- Every quote references an existing RFQ line item.
+- A bid does not quote the same line item more than once.
+- Bid currency matches the exercise base currency.
+
+Invalid data produces a visible dataset-error page instead of entering the interactive planner.
+
+## 7. State and persistence
+
+The canonical state is intentionally small:
 
 ```ts
-type DraftSelections = Record<LineItemId, BidId>;
+type DraftSelections = Record<string, string>;
 ```
 
-Example:
-
-```ts
-{
-  "LI-001": "BID-002",
-  "LI-002": "BID-001",
-  "LI-003": "BID-003"
-}
-```
-
-### Persisted draft envelope
+The persisted envelope is:
 
 ```ts
 type PersistedDraft = {
-  version: 1;
-  rfqId: string;
-  selections: DraftSelections;
+    version: 1;
+    rfqId: string;
+    selections: DraftSelections;
 };
 ```
 
@@ -255,400 +186,147 @@ Storage key:
 rototip-award-draft:<rfqId>:v1
 ```
 
-### Persistence rules
+On restore, the application validates the envelope and re-evaluates every selection. Totals, partner data, and eligibility are always derived again.
 
-- Persist only `selections`.
-- Validate persisted data with Zod.
-- Ignore corrupted persisted data safely.
-- Re-evaluate every restored selection against the current dataset.
-- Do not silently include an invalid restored selection in a complete award plan.
-- Keep invalid restored selections visible until the user replaces or removes them.
-- Show hydration/restoration state before rendering selection-dependent totals.
-- Make auto-save behavior visible: `Draft saved in this browser`.
-- Provide `Reset draft`.
+## 8. Preview and final-plan calculation
 
----
-
-## 9. Business rules
-
-### 9.1 Time
-
-Always use:
-
-```ts
-metadata.evaluationTimestamp
-```
-
-Never use the real clock.
-
-`validUntil` is an exclusive cutoff:
-
-```ts
-evaluationTimestamp >= validUntil
-```
-
-means the bid is expired.
-
-### 9.2 Bid eligibility
-
-A bid is eligible only when:
+`buildAwardPlan` first validates the draft and aggregates all currently valid selections through one shared partner/bid calculation path.
 
 ```text
-status === "SUBMITTED"
-AND
-evaluationTimestamp < validUntil
+Valid selections
+    |
+    v
+Selected rows with Decimal line totals
+    |
+    v
+Partner buckets
+    |
+    v
+Bid buckets (shipping added once here)
+    |
+    +--> incomplete: AwardPlanPreview
+    |
+    └--> complete: AwardPlan
 ```
 
-Keep ineligible bids visible and explain why they cannot be selected.
+The preview and final result therefore cannot drift into different shipping or subtotal implementations.
 
-### 9.3 Quote eligibility
-
-A line-item quote is eligible only when:
+## 9. Actual project structure
 
 ```text
-parent bid is eligible
-AND unitPrice > 0
-AND setupFee >= 0
-AND minimumOrderQuantity <= RFQ quantity
-AND leadTimeDays <= requiredLeadTimeDays
+data/
+  case-study.json
+
+src/
+  app/
+    globals.css
+    layout.tsx
+    page.tsx
+
+  data/
+    load-case-study.ts
+
+  domain/
+    award-plan.ts
+    dataset-integrity.ts
+    eligibility.ts
+    money.ts
+    schemas.ts
+    selections.ts
+
+  features/award-planner/
+    award-planner.tsx
+    award-summary.tsx
+    draft-status.tsx
+    eligibility-message.tsx
+    line-item-section.tsx
+    quote-option.tsx
+
+  lib/
+    formatters.ts
+
+  store/
+    award-draft-store.ts
+    persisted-draft-schema.ts
+
+tests/
+  award-draft-store.test.ts
+  award-plan.test.ts
+  award-summary.test.ts
+  dataset-integrity.test.ts
+  eligibility-message.test.ts
+  eligibility.test.ts
+  money.test.ts
+  persisted-draft-schema.test.ts
+  schemas.test.ts
+  selections.test.ts
 ```
 
-A missing quote is ineligible and must remain understandable in the comparison UI.
+## 10. Technology decisions
 
-### 9.4 Selection invariant
+- **Next.js App Router:** provides a simple server/client boundary and matches the suggested stack.
+- **Strict TypeScript:** makes domain result states and refactoring explicit.
+- **React:** implements the interactive comparison and selection interface.
+- **Tailwind CSS:** provides a compact, consistent UI without a separate component library.
+- **Zod:** validates the supplied JSON and untrusted browser persistence.
+- **Zustand:** manages the small shared draft state with per-RFQ persistence.
+- **Decimal.js:** avoids binary floating-point errors in commercial calculations.
+- **Vitest:** tests pure domain rules, store behavior, and important rendered states quickly.
 
-- A line item may have zero or one selected quote.
-- A selection is valid only if its current quote is eligible.
-- The UI should use radio-group semantics per line item.
+## 11. Verification
 
-### 9.5 Monetary rules
+Current automated coverage consists of 10 test files and 61 tests covering:
 
-Line-item total:
+- Dataset schema and relationship integrity.
+- Exclusive expiry and withdrawn bid behavior.
+- Missing, invalid-price, invalid-setup, MOQ, and lead-time cases.
+- Deterministic monetary calculation and rounding.
+- Empty, partial, invalid, and complete selection validation.
+- Shipping once per selected bid and split awards.
+- Draft serialization, corrupt storage, RFQ isolation, hydration, and reset behavior.
+- Empty, partial-preview, and complete award-summary rendering.
 
-```text
-unitPrice * RFQ quantity + setupFee
+Quality commands:
+
+```bash
+pnpm test
+pnpm lint
+pnpm typecheck
+pnpm build
 ```
 
-Shipping:
-
-```text
-Charge a selected bid's shippingFee exactly once
-when one or more quotes from that bid are selected.
-```
-
-Totals:
-
-- Group by selected bid for shipping correctness.
-- Present the final award plan grouped by partner.
-- Round display and output values to two decimal places.
-- Use decimal arithmetic for all intermediate calculations.
-
-### 9.6 Complete award plan
-
-A complete award plan requires:
-
-```text
-one selection for every RFQ line item
-AND
-every selected quote is currently eligible
-```
-
-If incomplete or invalid, return a structured result describing:
-
-- Missing line-item IDs.
-- Invalid selections and their reasons.
-
----
-
-## 10. Domain result types
-
-### Eligibility
-
-```ts
-type EligibilityIssueCode =
-  | "BID_NOT_SUBMITTED"
-  | "BID_EXPIRED"
-  | "MISSING_QUOTE"
-  | "INVALID_UNIT_PRICE"
-  | "INVALID_SETUP_FEE"
-  | "MOQ_EXCEEDS_QUANTITY"
-  | "LEAD_TIME_EXCEEDS_REQUIREMENT";
-
-type EligibilityResult =
-  | { eligible: true; issues: [] }
-  | { eligible: false; issues: EligibilityIssue[] };
-```
-
-Issues should carry structured values such as actual and required MOQ or lead time. The UI may then format them into user-facing messages without reimplementing business rules.
-
-### Award-plan result
-
-```ts
-type AwardPlanResult =
-  | {
-      complete: false;
-      missingLineItemIds: string[];
-      invalidSelections: InvalidSelection[];
-    }
-  | {
-      complete: true;
-      plan: AwardPlan;
-    };
-```
-
----
-
-## 11. Core domain functions
-
-These functions should be pure and independently tested:
-
-```ts
-validateDatasetIntegrity(data): DatasetIntegrityResult
-
-evaluateBidEligibility(
-  bid,
-  evaluationTimestamp,
-): EligibilityResult
-
-evaluateQuoteEligibility({
-  bid,
-  quote,
-  lineItem,
-  evaluationTimestamp,
-}): EligibilityResult
-
-calculateLineItemTotal({
-  unitPrice,
-  quantity,
-  setupFee,
-}): Decimal
-
-validateDraftSelections(
-  data,
-  selections,
-): ValidatedSelectionsResult
-
-buildAwardPlan(
-  data,
-  selections,
-): AwardPlanResult
-```
-
-React components must not duplicate these rules.
-
----
-
-## 12. Dataset integrity checks
-
-Zod validates shape and primitive constraints. A small integrity layer should additionally check:
-
-- IDs are unique within their collections.
-- Every bid references an existing partner.
-- Every quote references an existing RFQ line item.
-- A bid does not quote the same line item more than once.
-- Bid currency matches the supplied base currency for this single-currency exercise.
-
-Integrity failures should render a clear invalid-dataset state rather than crashing the UI.
-
----
-
-## 13. Known case-study edge cases
-
-The implementation and tests must explicitly cover:
-
-1. **Exclusive expiry:** `BID-004` expires exactly at the evaluation timestamp and is therefore ineligible.
-2. **Withdrawn bid:** `BID-005` is ineligible despite its future validity date.
-3. **Lead-time failure:** `BID-002 / LI-003` exceeds the required lead time.
-4. **MOQ failure:** `BID-002 / LI-004` requires more units than requested.
-5. **Missing quote:** `BID-005` has no quote for `LI-004`.
-6. **Shipping once:** Selecting multiple quotes from one bid charges one shipping fee.
-7. **Split award:** Selections may come from multiple bids/partners.
-8. **Invalid restored draft:** A stored selection may no longer be eligible and must block completion visibly.
-9. **Incomplete draft:** Partial selection is valid to save but cannot produce a complete plan.
-10. **Fractional pricing:** Monetary calculations contain three-decimal unit prices and must remain deterministic.
-
----
-
-## 14. UI plan
-
-### Page shell
-
-- RFQ title and customer reference.
-- Evaluation timestamp.
-- Selection progress, for example `2 of 4 selected`.
-- Draft persistence status.
-
-### Line-item comparison section
-
-For each RFQ line item, show:
-
-- Part number and name.
-- Manufacturing process and material.
-- Requested quantity.
-- Required lead time.
-- Drawing filename.
-
-For every partner choice, show:
-
-- Partner name and country.
-- Quality rating.
-- On-time delivery rate.
-- Bid status and validity.
-- Unit price.
-- Setup fee.
-- Calculated line-item total.
-- MOQ.
-- Lead time.
-- Partner/bid notes and quote notes.
-- Eligibility status.
-- All ineligibility reasons.
-
-Ineligible and missing choices remain visible but disabled.
-
-### Award summary
-
-A sticky desktop sidebar or clear summary section should show:
-
-- Selection progress.
-- Invalid restored selections.
-- Grouped selected line items per partner.
-- Partner subtotal.
-- One shipping fee per selected bid.
-- Partner total.
-- Grand total.
-- Complete/incomplete state.
-- Optional award-plan JSON action after completion.
-
-### Recommendation policy
-
-The interface may visually identify the lowest eligible line-item price, but it must not label it as the automatic best or recommended choice.
-
----
-
-## 15. Testing strategy
-
-Prioritize domain tests over broad snapshot tests.
-
-### Dataset integrity
-
-- Invalid partner reference.
-- Invalid line-item reference.
-- Duplicate quote for one line item within a bid.
-
-### Eligibility
-
-- `evaluationTimestamp === validUntil` is expired.
-- Submitted and unexpired bid is eligible.
-- Withdrawn bid is ineligible.
-- Missing quote is ineligible.
-- Non-positive unit price is ineligible.
-- Negative setup fee is ineligible.
-- MOQ above quantity is ineligible.
-- Lead time above requirement is ineligible.
-
-### Money
-
-- Correct line-item total.
-- Fractional unit price calculation.
-- Shipping charged once for multiple line items from one bid.
-- Shipping charged separately for different selected bids.
-- Output rounded to two decimal places using the documented policy.
-
-### Award plan
-
-- Empty and partial drafts remain incomplete.
-- Complete valid selections produce a plan.
-- Plan groups work by partner and includes `bidId`.
-- Invalid restored selection blocks completion.
-- Every line item appears exactly once in a complete plan.
-
----
-
-## 16. Four-hour implementation timebox
-
-Track focused implementation time and avoid optional work before MVP completion.
-
-### 0:00–0:25 — Setup and data boundary
-
-- Initialize Next.js with strict TypeScript and Tailwind.
-- Add Zod, Zustand, decimal.js, and Vitest.
-- Add supplied data.
-- Define schemas and loader.
-
-### 0:25–1:15 — Domain rules and tests
-
-- Define domain types.
-- Implement integrity checks.
-- Implement bid and quote eligibility.
-- Implement monetary calculations.
-- Add focused tests for the known edge cases.
-
-### 1:15–1:45 — Draft state and persistence
-
-- Define minimal Zustand store.
-- Add persist middleware.
-- Add versioned storage key.
-- Validate restored state.
-- Add hydration status.
-
-### 1:45–3:10 — Comparison and selection UI
-
-- Build page shell.
-- Build line-item sections and quote options.
-- Render eligibility explanations.
-- Wire selections and auto-save state.
-- Build award summary.
-
-### 3:10–3:40 — Award-plan generation and verification
-
-- Implement complete/incomplete result.
-- Verify shipping and totals.
-- Add tests for split award and invalid selections.
-- Add optional JSON display/copy only if time remains.
-
-### 3:40–4:00 — Cleanup and documentation
-
-- Run lint, type-check, and tests.
-- Remove temporary TODOs.
-- Verify refresh persistence manually.
-- Add concise README technology decisions, assumptions, trade-offs, and unfinished work.
-- Rehearse the interview demo flow.
-
----
-
-## 17. Definition of done
-
-The MVP is done when:
-
-- All supplied RFQ line items and partner choices are visible.
-- Every ineligibility reason is correct and understandable.
-- Only eligible quotes can be selected.
-- One selection per line item is enforced.
-- Split awards work.
-- Totals are correct and shipping is charged once per selected bid.
-- Partial drafts survive refresh.
-- Invalid stored selections are visible and excluded from completion.
-- A complete award plan is available only for complete valid selections.
-- Core domain tests pass.
-- Type-check and lint pass.
-- The architecture and every dependency can be explained in one sentence.
-
----
-
-## 18. Interview demonstration flow
-
-1. Explain the domain: RFQ -> bids -> line-item quotes -> award plan.
-2. Show all partner choices for one line item.
-3. Explain one eligible and one ineligible quote.
-4. Select two line items from one partner and show shipping charged once.
-5. Split the award across another partner.
-6. Refresh the browser and show restored draft selections.
-7. Demonstrate incomplete-plan messaging.
-8. Complete all selections and show the grouped award plan.
-9. Walk through the pure domain layer and key tests.
-10. Explain trade-offs:
-    - Why local JSON instead of a mock API.
-    - Why localStorage is sufficient.
-    - Why Zustand was used.
-    - Why TanStack Query, Redux, Prisma, and a backend were not used.
-    - Why decimal arithmetic was used.
+## 12. Intentional trade-offs and non-goals
+
+- Local JSON is used because the exercise explicitly requires no external service.
+- `localStorage` is sufficient for one-browser draft persistence; there is no backend synchronization.
+- No authentication, database, API, audit log, or multi-user conflict handling is included.
+- Only EUR is supported because the supplied dataset and brief are single-currency.
+- No automatic cheapest/best recommendation is made because quality, delivery, and notes are human decision inputs.
+- No downloadable JSON was added because the in-interface award summary satisfies the output requirement.
+- No browser E2E framework was added; business-critical behavior is covered by domain, store, and rendered-component tests plus manual smoke testing.
+
+## 13. Completed delivery checklist
+
+- [x] All RFQ line items and partner choices remain visible.
+- [x] Eligibility reasons are correct and understandable.
+- [x] Only eligible quotes can be selected.
+- [x] One selection per line item is enforced.
+- [x] Split awards work.
+- [x] Partial selections show a valid-only cost preview.
+- [x] Totals are correct and shipping is charged once per selected bid.
+- [x] Partial drafts survive refresh.
+- [x] Invalid restored selections are visible and excluded from totals.
+- [x] Final award output requires a complete valid selection set.
+- [x] Tests, lint, typecheck, and production build pass.
+
+## 14. Interview demo flow
+
+1. Explain RFQ -> line items -> bids -> quotes -> award plan.
+2. Compare one eligible and one ineligible quote.
+3. Select one quote and show the partial cost preview.
+4. Select a second quote from the same bid and show that shipping remains unchanged.
+5. Refresh and demonstrate restored draft selections.
+6. Split the remaining award across another partner.
+7. Complete the plan and show the final partner/bid grouping.
+8. Open the pure domain functions and focused tests.
+9. Explain the documented technology choices and trade-offs.

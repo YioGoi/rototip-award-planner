@@ -55,6 +55,7 @@ export function DraftStatus({
 
     return (
         <aside
+            aria-label="Draft status"
             aria-live="polite"
             className="mt-5 rounded-xl border border-slate-200 bg-white p-4"
         >
@@ -115,7 +116,7 @@ export function DraftStatus({
                                             selection.lineItemId,
                                         );
                                     }}
-                                    className="mt-2 font-medium underline-offset-4 hover:underline"
+                                    className="mt-2 font-medium underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
                                 >
                                     Remove saved selection
                                 </button>
@@ -129,7 +130,7 @@ export function DraftStatus({
                 <button
                     type="button"
                     onClick={onReset}
-                    className="mt-4 text-sm font-medium text-red-700 underline-offset-4 hover:underline"
+                    className="mt-4 text-sm font-medium text-red-700 underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
                 >
                     Reset draft
                 </button>

@@ -28,7 +28,7 @@ const messageCases: MessageCase[] = [
             validUntil: "2026-08-03T09:00:00Z",
         },
         expectedMessage:
-            "Bid expired at 2026-08-03T09:00:00Z.",
+            "Bid expired at 3 Aug 2026, 09:00 UTC.",
     },
     {
         issue: {

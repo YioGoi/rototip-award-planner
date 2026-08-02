@@ -11,8 +11,9 @@ export function calculateLineItemTotal(
 ): Decimal {
     const { unitPrice, quantity, setupFee } = input;
 
-    // Use Decimal.js to perform precise arithmetic for monetary calculations.
-    // This avoids floating-point precision issues that can occur with standard JavaScript number operations.
+    // Keep intermediate monetary values unrounded.
+    // Apply ROUND_HALF_UP only at display/output boundaries so grouped
+    // totals do not compound rounding at each calculation step.
     const total = new Decimal(unitPrice)
         .times(quantity)
         .plus(setupFee);
