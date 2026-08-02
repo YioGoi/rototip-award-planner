@@ -1,0 +1,304 @@
+{
+  "metadata": {
+    "evaluationTimestamp": "2026-08-03T09:00:00Z",
+    "baseCurrency": "EUR"
+  },
+  "rfq": {
+    "id": "RFQ-2026-1042",
+    "title": "Pilot production components",
+    "customerReference": "NOVA-PILOT-07",
+    "lineItems": [
+      {
+        "id": "LI-001",
+        "partNumber": "NOVA-HSG-042",
+        "name": "Sensor housing",
+        "manufacturingProcess": "CNC milling",
+        "material": "EN AW-6082 T6 aluminium",
+        "quantity": 120,
+        "requiredLeadTimeDays": 21,
+        "drawingFileName": "NOVA-HSG-042.step"
+      },
+      {
+        "id": "LI-002",
+        "partNumber": "NOVA-SFT-018",
+        "name": "Drive shaft",
+        "manufacturingProcess": "CNC turning",
+        "material": "1.4301 stainless steel",
+        "quantity": 80,
+        "requiredLeadTimeDays": 28,
+        "drawingFileName": "NOVA-SFT-018.step"
+      },
+      {
+        "id": "LI-003",
+        "partNumber": "NOVA-BRK-007",
+        "name": "Mounting bracket",
+        "manufacturingProcess": "Sheet metal cutting and bending",
+        "material": "S355MC steel, powder coated",
+        "quantity": 250,
+        "requiredLeadTimeDays": 18,
+        "drawingFileName": "NOVA-BRK-007.dxf"
+      },
+      {
+        "id": "LI-004",
+        "partNumber": "NOVA-SPC-003",
+        "name": "Insulating spacer",
+        "manufacturingProcess": "CNC turning",
+        "material": "POM-C natural",
+        "quantity": 40,
+        "requiredLeadTimeDays": 14,
+        "drawingFileName": "NOVA-SPC-003.step"
+      }
+    ]
+  },
+  "partners": [
+    {
+      "id": "MP-001",
+      "name": "Atlas CNC GmbH",
+      "country": "DE",
+      "qualityRating": 4.8,
+      "onTimeDeliveryRate": 0.96
+    },
+    {
+      "id": "MP-002",
+      "name": "Bosphorus Precision Ltd.",
+      "country": "TR",
+      "qualityRating": 4.6,
+      "onTimeDeliveryRate": 0.91
+    },
+    {
+      "id": "MP-003",
+      "name": "Vistula Manufacturing Sp. z o.o.",
+      "country": "PL",
+      "qualityRating": 4.7,
+      "onTimeDeliveryRate": 0.94
+    },
+    {
+      "id": "MP-004",
+      "name": "Northstar Machining Ltd.",
+      "country": "GB",
+      "qualityRating": 4.9,
+      "onTimeDeliveryRate": 0.97
+    },
+    {
+      "id": "MP-005",
+      "name": "FormWerk Industries B.V.",
+      "country": "NL",
+      "qualityRating": 4.5,
+      "onTimeDeliveryRate": 0.89
+    }
+  ],
+  "bids": [
+    {
+      "id": "BID-001",
+      "partnerId": "MP-001",
+      "status": "SUBMITTED",
+      "currency": "EUR",
+      "submittedAt": "2026-07-29T13:20:00Z",
+      "validUntil": "2026-08-14T00:00:00Z",
+      "shippingFee": 420,
+      "notes": "Includes material certificates. Anodising for the housing is handled by an approved subcontractor.",
+      "lineItemQuotes": [
+        {
+          "lineItemId": "LI-001",
+          "unitPrice": 46.8,
+          "setupFee": 350,
+          "minimumOrderQuantity": 50,
+          "leadTimeDays": 18,
+          "notes": "Clear anodising included."
+        },
+        {
+          "lineItemId": "LI-002",
+          "unitPrice": 38.5,
+          "setupFee": 220,
+          "minimumOrderQuantity": 40,
+          "leadTimeDays": 24,
+          "notes": "Material certificate included."
+        },
+        {
+          "lineItemId": "LI-003",
+          "unitPrice": 12.4,
+          "setupFee": 180,
+          "minimumOrderQuantity": 100,
+          "leadTimeDays": 15,
+          "notes": "Powder coating included."
+        },
+        {
+          "lineItemId": "LI-004",
+          "unitPrice": 22,
+          "setupFee": 90,
+          "minimumOrderQuantity": 20,
+          "leadTimeDays": 12,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "id": "BID-002",
+      "partnerId": "MP-002",
+      "status": "SUBMITTED",
+      "currency": "EUR",
+      "submittedAt": "2026-07-30T08:45:00Z",
+      "validUntil": "2026-08-12T00:00:00Z",
+      "shippingFee": 561.2,
+      "notes": "Prices assume all awarded parts ship together.",
+      "lineItemQuotes": [
+        {
+          "lineItemId": "LI-001",
+          "unitPrice": 39.744,
+          "setupFee": 460,
+          "minimumOrderQuantity": 100,
+          "leadTimeDays": 20,
+          "notes": "Anodising included."
+        },
+        {
+          "lineItemId": "LI-002",
+          "unitPrice": 32.2,
+          "setupFee": 322,
+          "minimumOrderQuantity": 50,
+          "leadTimeDays": 26,
+          "notes": "Material certificate available."
+        },
+        {
+          "lineItemId": "LI-003",
+          "unitPrice": 9.936,
+          "setupFee": 239.2,
+          "minimumOrderQuantity": 200,
+          "leadTimeDays": 24,
+          "notes": "Lead time exceeds the requested target."
+        },
+        {
+          "lineItemId": "LI-004",
+          "unitPrice": 17.94,
+          "setupFee": 110.4,
+          "minimumOrderQuantity": 75,
+          "leadTimeDays": 13,
+          "notes": "Price is subject to the stated minimum order quantity."
+        }
+      ]
+    },
+    {
+      "id": "BID-003",
+      "partnerId": "MP-003",
+      "status": "SUBMITTED",
+      "currency": "EUR",
+      "submittedAt": "2026-07-31T16:10:00Z",
+      "validUntil": "2026-08-18T00:00:00Z",
+      "shippingFee": 300,
+      "notes": "Can support a split award. Parts will be packed and labelled separately.",
+      "lineItemQuotes": [
+        {
+          "lineItemId": "LI-001",
+          "unitPrice": 49,
+          "setupFee": 200,
+          "minimumOrderQuantity": 60,
+          "leadTimeDays": 15,
+          "notes": "Express production slot available."
+        },
+        {
+          "lineItemId": "LI-002",
+          "unitPrice": 36,
+          "setupFee": 420,
+          "minimumOrderQuantity": 40,
+          "leadTimeDays": 27,
+          "notes": null
+        },
+        {
+          "lineItemId": "LI-003",
+          "unitPrice": 11.6,
+          "setupFee": 120,
+          "minimumOrderQuantity": 150,
+          "leadTimeDays": 18,
+          "notes": "Powder coating included."
+        },
+        {
+          "lineItemId": "LI-004",
+          "unitPrice": 20.5,
+          "setupFee": 150,
+          "minimumOrderQuantity": 20,
+          "leadTimeDays": 14,
+          "notes": "Material traceability included."
+        }
+      ]
+    },
+    {
+      "id": "BID-004",
+      "partnerId": "MP-004",
+      "status": "SUBMITTED",
+      "currency": "EUR",
+      "submittedAt": "2026-07-24T11:30:00Z",
+      "validUntil": "2026-08-03T09:00:00Z",
+      "shippingFee": 315.9,
+      "notes": "This quotation expires exactly at the evaluation timestamp.",
+      "lineItemQuotes": [
+        {
+          "lineItemId": "LI-001",
+          "unitPrice": 41.535,
+          "setupFee": 210.6,
+          "minimumOrderQuantity": 40,
+          "leadTimeDays": 17,
+          "notes": null
+        },
+        {
+          "lineItemId": "LI-002",
+          "unitPrice": 34.398,
+          "setupFee": 187.2,
+          "minimumOrderQuantity": 40,
+          "leadTimeDays": 22,
+          "notes": null
+        },
+        {
+          "lineItemId": "LI-003",
+          "unitPrice": 10.413,
+          "setupFee": 117,
+          "minimumOrderQuantity": 100,
+          "leadTimeDays": 16,
+          "notes": null
+        },
+        {
+          "lineItemId": "LI-004",
+          "unitPrice": 18.486,
+          "setupFee": 93.6,
+          "minimumOrderQuantity": 20,
+          "leadTimeDays": 12,
+          "notes": null
+        }
+      ]
+    },
+    {
+      "id": "BID-005",
+      "partnerId": "MP-005",
+      "status": "WITHDRAWN",
+      "currency": "EUR",
+      "submittedAt": "2026-07-28T09:15:00Z",
+      "validUntil": "2026-08-20T00:00:00Z",
+      "shippingFee": 240,
+      "notes": "Withdrawn after a production-capacity change.",
+      "lineItemQuotes": [
+        {
+          "lineItemId": "LI-001",
+          "unitPrice": 44,
+          "setupFee": 250,
+          "minimumOrderQuantity": 50,
+          "leadTimeDays": 19,
+          "notes": null
+        },
+        {
+          "lineItemId": "LI-002",
+          "unitPrice": 34.5,
+          "setupFee": 240,
+          "minimumOrderQuantity": 40,
+          "leadTimeDays": 25,
+          "notes": null
+        },
+        {
+          "lineItemId": "LI-003",
+          "unitPrice": 11,
+          "setupFee": 140,
+          "minimumOrderQuantity": 100,
+          "leadTimeDays": 17,
+          "notes": null
+        }
+      ]
+    }
+  ]
+}
