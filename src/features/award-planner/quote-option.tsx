@@ -132,13 +132,13 @@ export function QuoteOption({
                         Valid until
                     </dt>
                     <dd className="mt-1 font-medium text-slate-900">
-                        {formatDateTime(bid.validUntil)}
+                        {formatDateTime(bid.validUntil)} UTC
                     </dd>
                 </div>
 
                 <div>
                     <dt className="text-slate-500">
-                        Bid shipping
+                        Bid shipping — charged once if selected
                     </dt>
                     <dd className="mt-1 font-medium text-slate-900">
                         {formatMoney(

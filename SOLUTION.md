@@ -103,7 +103,7 @@ line total = unit price * RFQ quantity + setup fee
 
 Shipping belongs to a bid. It is added once when at least one quote from that bid is selected, regardless of how many selected line items that bid contains.
 
-Decimal.js keeps intermediate arithmetic deterministic. Display and output values are rounded to two decimal places with `ROUND_HALF_UP`.
+Decimal.js keeps intermediate arithmetic deterministic. Calculated totals are rounded to two decimal places with `ROUND_HALF_UP`, while supplied unit prices are displayed with up to three decimal places.
 
 ### Draft preview versus final plan
 

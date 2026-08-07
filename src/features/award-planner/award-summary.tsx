@@ -173,6 +173,7 @@ function CostBreakdown({
                                                         {formatMoney(
                                                             lineItem.unitPrice,
                                                             currency,
+                                                            3,
                                                         )}
                                                     </dd>
                                                 </div>

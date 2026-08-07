@@ -85,6 +85,9 @@ describe("AwardSummary", () => {
         expect(markup).toContain(
             formatMoney(8688.48, "EUR"),
         );
+        expect(markup).toContain(
+            formatMoney(39.744, "EUR", 3),
+        );
 
         const shippingLabels =
             markup.match(/Shipping once per bid/g) ?? [];

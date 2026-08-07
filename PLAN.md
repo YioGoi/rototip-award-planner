@@ -140,7 +140,7 @@ line total = unit price * RFQ quantity + setup fee
 ```
 
 - Intermediate calculations use `Decimal.js` without intermediate rounding.
-- Output values use two decimal places and `ROUND_HALF_UP`.
+- Calculated totals use two decimal places and `ROUND_HALF_UP`; supplied unit prices display up to three decimal places.
 - Shipping belongs to a bid and is charged once when one or more quotes from that bid are selected.
 - Selecting multiple line items from the same bid does not duplicate shipping.
 
